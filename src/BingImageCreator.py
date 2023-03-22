@@ -3,9 +3,9 @@ import urllib
 import time
 import requests
 import regex
+import argparse
 
 BING_URL = "https://www.bing.com"
-
 
 class ImageGen:
     """
@@ -55,7 +55,7 @@ class ImageGen:
             response = self.session.get(polling_url)
             if response.status_code != 200:
                 raise Exception("Could not get results")
-            if response.text == "":
+            if not response.text:
                 time.sleep(1)
                 continue
             else:
@@ -88,8 +88,6 @@ class ImageGen:
 
 
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-U", help="Auth cookie from browser", type=str, required=True)
     parser.add_argument(
