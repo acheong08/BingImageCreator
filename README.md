@@ -1,7 +1,7 @@
 # BingImageCreator
 High quality image generation by Microsoft. Reverse engineered API.
 
-`pip3 install --upgrade BingImageCreator`
+`pip3 install --upgrade <PENDING>` - Not yet published
 
 ```
  $ python3 -m BingImageCreator -h 
