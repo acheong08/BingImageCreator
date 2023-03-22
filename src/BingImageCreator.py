@@ -27,7 +27,7 @@ class ImageGen:
         }
         self.session.cookies.set("_U", auth_cookie)
 
-    def getImages(self, prompt: str) -> list:
+    def get_images(self, prompt: str) -> list:
         """
         Fetches image links from Bing
         Parameters:
@@ -66,7 +66,7 @@ class ImageGen:
         # Remove duplicates
         return list(set(image_links))
 
-    def saveImages(self, links: list, output_dir: str) -> None:
+    def save_images(self, links: list, output_dir: str) -> None:
         """
         Saves images to output directory
         """
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--U", help="Auth cookie from browser", type=str, required=True)
+    parser.add_argument("-U", help="Auth cookie from browser", type=str, required=True)
     parser.add_argument(
         "--prompt", help="Prompt to generate images for", type=str, required=True
     )
@@ -101,6 +101,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # Create image generator
     image_generator = ImageGen(args.U)
-    image_generator.saveImages(
-        image_generator.getImages(args.prompt), output_dir=args.output_dir
+    image_generator.save_images(
+        image_generator.get_images(args.prompt), output_dir=args.output_dir
     )

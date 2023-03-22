@@ -16,12 +16,12 @@ Image generation by Microsoft Bing
 
 - `auth_cookie` - str
 
-<a id="BingImageCreator.ImageGen.getImages"></a>
+<a id="BingImageCreator.ImageGen.get_images"></a>
 
-#### getImages
+#### get\_images
 
 ```python
-def getImages(prompt: str) -> list
+def get_images(prompt: str) -> list
 ```
 
 Fetches image links from Bing
@@ -31,12 +31,12 @@ Fetches image links from Bing
 - `prompt` - str
   Returns a list of image links
 
-<a id="BingImageCreator.ImageGen.saveImages"></a>
+<a id="BingImageCreator.ImageGen.save_images"></a>
 
-#### saveImages
+#### save\_images
 
 ```python
-def saveImages(links: list, output_dir: str) -> None
+def save_images(links: list, output_dir: str) -> None
 ```
 
 Saves images to output directory
