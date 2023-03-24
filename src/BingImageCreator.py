@@ -7,6 +7,7 @@ import argparse
 
 BING_URL = "https://www.bing.com"
 
+
 class ImageGen:
     """
     Image generation by Microsoft Bing
@@ -39,8 +40,12 @@ class ImageGen:
         url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=3&FORM=GENCRE"
         response = self.session.post(url, allow_redirects=False)
         if response.status_code != 302:
-            print(f"ERROR: {response.text}")
-            raise Exception("Redirect failed")
+            url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=4&FORM=GENCRE"
+            response3 = self.session.post(url, allow_redirects=False)
+            if response3.status_code != 302:
+                print(f"ERROR: {response3.text}")
+                raise Exception("Redirect failed")
+            response = response3
         # Get redirect URL
         redirect_url = response.headers["Location"].replace("&nfy=1", "")
         request_id = redirect_url.split("id=")[-1]
