@@ -1,9 +1,10 @@
+import json
 import os
-import urllib
 import time
-import requests
+import urllib
+
 import regex
-import argparse
+import requests
 
 BING_URL = "https://www.bing.com"
 
@@ -33,15 +34,16 @@ class ImageGen:
         Fetches image links from Bing
         Parameters:
             prompt: str
-        Returns a list of image links
         """
         print("Sending request...")
         url_encoded_prompt = urllib.parse.quote(prompt)
-        url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=3&FORM=GENCRE"
+        # https://www.bing.com/images/create?q=<PROMPT>&rt=3&FORM=GENCRE
+        url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=4&FORM=GENCRE"
         response = self.session.post(url, allow_redirects=False)
         if response.status_code != 302:
-            url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=4&FORM=GENCRE"
-            response3 = self.session.post(url, allow_redirects=False)
+            # if rt4 fails, try rt3
+            url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=3&FORM=GENCRE"
+            response3 = self.session.post(url, allow_redirects=False, timeout=200)
             if response3.status_code != 302:
                 print(f"ERROR: {response3.text}")
                 raise Exception("Redirect failed")
@@ -59,7 +61,7 @@ class ImageGen:
             response = self.session.get(polling_url)
             if response.status_code != 200:
                 raise Exception("Could not get results")
-            if not response.text:
+            if response.text == "":
                 time.sleep(1)
                 continue
             else:
@@ -67,8 +69,10 @@ class ImageGen:
 
         # Use regex to search for src=""
         image_links = regex.findall(r'src="([^"]+)"', response.text)
+        # Remove size limit
+        normal_image_links = [link.split("?w=")[0] for link in image_links]
         # Remove duplicates
-        return list(set(image_links))
+        return list(set(normal_image_links))
 
     def save_images(self, links: list, output_dir: str) -> None:
         """
@@ -80,29 +84,55 @@ class ImageGen:
         except FileExistsError:
             pass
         image_num = 0
-        for link in links:
-            with self.session.get(link, stream=True) as response:
-                # save response to file
-                response.raise_for_status()
-                with open(f"{output_dir}/{image_num}.jpeg", "wb") as file:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        file.write(chunk)
+        try:
+            for link in links:
+                with self.session.get(link, stream=True) as response:
+                    # save response to file
+                    response.raise_for_status()
+                    with open(f"{output_dir}/{image_num}.jpeg", "wb") as output_file:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            output_file.write(chunk)
 
-            image_num += 1
+                image_num += 1
+        except requests.exceptions.MissingSchema as url_exception:
+            raise Exception(
+                "Inappropriate contents found in the generated images. Please try again or try another prompt."
+            ) from url_exception
 
 
 if __name__ == "__main__":
+    import argparse
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("-U", help="Auth cookie from browser", type=str, required=True)
+    parser.add_argument("-U", help="Auth cookie from browser", type=str)
+    parser.add_argument("--cookie-file", help="File containing auth cookie", type=str)
     parser.add_argument(
-        "--prompt", help="Prompt to generate images for", type=str, required=True
+        "--prompt",
+        help="Prompt to generate images for",
+        type=str,
+        required=True,
     )
     parser.add_argument(
-        "--output-dir", help="Output directory", type=str, default="./output"
+        "--output-dir",
+        help="Output directory",
+        type=str,
+        default="./output",
     )
     args = parser.parse_args()
+    # Load auth cookie
+    with open(args.cookie_file, encoding="utf-8") as file:
+        cookie_json = json.load(file)
+        for cookie in cookie_json:
+            if cookie.get("name") == "_U":
+                args.U = cookie.get("value")
+                break
+
+    if args.U is None:
+        raise Exception("Could not find auth cookie")
+
     # Create image generator
     image_generator = ImageGen(args.U)
     image_generator.save_images(
-        image_generator.get_images(args.prompt), output_dir=args.output_dir
+        image_generator.get_images(args.prompt),
+        output_dir=args.output_dir,
     )
