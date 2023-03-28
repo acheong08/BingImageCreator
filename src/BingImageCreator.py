@@ -1,8 +1,6 @@
 import json
 import os
 import time
-import urllib
-
 import regex
 import requests
 
@@ -36,7 +34,7 @@ class ImageGen:
             prompt: str
         """
         print("Sending request...")
-        url_encoded_prompt = urllib.parse.quote(prompt)
+        url_encoded_prompt = requests.utils.quote(prompt)
         # https://www.bing.com/images/create?q=<PROMPT>&rt=3&FORM=GENCRE
         url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=4&FORM=GENCRE"
         response = self.session.post(url, allow_redirects=False)
@@ -120,13 +118,16 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     # Load auth cookie
-    with open(args.cookie_file, encoding="utf-8") as file:
-        cookie_json = json.load(file)
-        for cookie in cookie_json:
-            if cookie.get("name") == "_U":
-                args.U = cookie.get("value")
-                break
+    try:
+        with open(args.cookie_file, encoding="utf-8") as file:
+            cookie_json = json.load(file)
+            for cookie in cookie_json:
+                if cookie.get("name") == "_U":
+                    args.U = cookie.get("value")
+                    break
 
+    except:
+        pass
     if args.U is None:
         raise Exception("Could not find auth cookie")
 
