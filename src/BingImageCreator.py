@@ -1,8 +1,11 @@
 import json
 import os
+import sys
 import time
 import regex
 import requests
+import argparse
+import pkg_resources
 
 BING_URL = "https://www.bing.com"
 
@@ -44,7 +47,7 @@ class ImageGen:
             response3 = self.session.post(url, allow_redirects=False, timeout=200)
             if response3.status_code != 302:
                 print(f"ERROR: {response3.text}")
-                raise Exception("Redirect failed")
+                raise Exception("Redirect failed, also possible that this prompt isn't allowed")
             response = response3
         # Get redirect URL
         redirect_url = response.headers["Location"].replace("&nfy=1", "")
@@ -56,13 +59,13 @@ class ImageGen:
         print("Waiting for results...")
         start_wait = time.time()
         while True:
-            if int(time.time() - start_wait) > 300:
+            if int(time.time() - start_wait) > 200:
                 raise Exception("Timeout error")
             print(".", end="", flush=True)
             response = self.session.get(polling_url)
             if response.status_code != 200:
                 raise Exception("Could not get results")
-            if response.text == "":
+            if not response.text:
                 time.sleep(1)
                 continue
             else:
@@ -115,8 +118,6 @@ class ImageGen:
 
 
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-U", help="Auth cookie from browser", type=str)
     parser.add_argument("--cookie-file", help="File containing auth cookie", type=str)
@@ -124,15 +125,25 @@ if __name__ == "__main__":
         "--prompt",
         help="Prompt to generate images for",
         type=str,
-        required=True,
     )
+
     parser.add_argument(
         "--output-dir",
         help="Output directory",
         type=str,
         default="./output",
     )
+
+    parser.add_argument(
+        "--version", action='store_true',
+        help="Print the version number",
+    )
     args = parser.parse_args()
+
+    if args.version:
+        print(pkg_resources.get_distribution("BingImageCreator").version)
+        sys.exit()
+
     # Load auth cookie
     try:
         with open(args.cookie_file, encoding="utf-8") as file:
@@ -144,7 +155,9 @@ if __name__ == "__main__":
 
     except:
         pass
-    if args.U is None:
+    if not args.prompt:
+        raise Exception('you need to provide a prompt')
+    if not args.U:
         raise Exception("Could not find auth cookie")
 
     # Create image generator
@@ -152,4 +165,5 @@ if __name__ == "__main__":
     image_generator.save_images(
         image_generator.get_images(args.prompt),
         output_dir=args.output_dir,
+
     )
