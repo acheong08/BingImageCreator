@@ -144,6 +144,7 @@ class ImageGenAsync:
         self.session = aiohttp.ClientSession(
             headers=HEADERS,
             cookies={"_U": auth_cookie},
+            trust_env=True,
         )
         self.quiet = quiet
 
@@ -201,7 +202,7 @@ class ImageGenAsync:
             if response.status != 200:
                 raise Exception("Could not get results")
             content = await response.text()
-            if content:
+            if content and content.find("errorMessage") == -1:
                 break
 
             await asyncio.sleep(1)

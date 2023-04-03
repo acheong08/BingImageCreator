@@ -11,6 +11,7 @@ options:
   -h, --help            show this help message and exit
   -U U                  Auth cookie from browser
   --prompt PROMPT       Prompt to generate images for
+  --asyncio             Use async to sync png
   --output-dir OUTPUT_DIR
                         Output directory
 ```
