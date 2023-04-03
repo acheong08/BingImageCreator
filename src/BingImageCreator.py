@@ -86,7 +86,7 @@ class ImageGen:
             response = self.session.get(polling_url)
             if response.status_code != 200:
                 raise Exception("Could not get results")
-            if not response.text:
+            if not response.text or response.text.find("errorMessage") != -1:
                 time.sleep(1)
                 continue
             else:
