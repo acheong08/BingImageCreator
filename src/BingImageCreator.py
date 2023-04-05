@@ -126,11 +126,16 @@ class ImageGen:
         with contextlib.suppress(FileExistsError):
             os.mkdir(output_dir)
         try:
-            for image_num, link in enumerate(links):
+            jpeg_index = 0
+            for link in links:
+                while os.path.exists(os.path.join(output_dir, f"{jpeg_index}.jpeg")):
+                    jpeg_index += 1
                 with self.session.get(link, stream=True) as response:
                     # save response to file
                     response.raise_for_status()
-                    with open(f"{output_dir}/{image_num}.jpeg", "wb") as output_file:
+                    with open(
+                        os.path.join(output_dir, f"{jpeg_index}.jpeg"), "wb"
+                    ) as output_file:
                         for chunk in response.iter_content(chunk_size=8192):
                             output_file.write(chunk)
         except requests.exceptions.MissingSchema as url_exception:
@@ -241,10 +246,16 @@ class ImageGenAsync:
         with contextlib.suppress(FileExistsError):
             os.mkdir(output_dir)
         try:
-            for image_num, link in enumerate(links):
+            jpeg_index = 0
+            for link in links:
+                while os.path.exists(os.path.join(output_dir, f"{jpeg_index}.jpeg")):
+                    jpeg_index += 1
+            for link in links:
                 async with self.session.get(link, raise_for_status=True) as response:
                     # save response to file
-                    with open(f"{output_dir}/{image_num}.jpeg", "wb") as output_file:
+                    with open(
+                        os.path.join(output_dir, f"{jpeg_index}.jpeg"), "wb"
+                    ) as output_file:
                         async for chunk in response.content.iter_chunked(8192):
                             output_file.write(chunk)
         except aiohttp.client_exceptions.InvalidURL as url_exception:
