@@ -271,7 +271,7 @@ async def async_image_gen(args) -> None:
         await image_generator.save_images(images, output_dir=args.output_dir)
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-U", help="Auth cookie from browser", type=str)
     parser.add_argument("--cookie-file", help="File containing auth cookie", type=str)
@@ -330,3 +330,7 @@ if __name__ == "__main__":
         )
     else:
         asyncio.run(async_image_gen(args))
+
+
+if __name__ == "__main__":
+    main()
