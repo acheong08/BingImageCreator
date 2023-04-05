@@ -12,7 +12,7 @@ setup(
     package_dir={"": "src"},
     url="https://github.com/acheong08/BingImageCreator",
     project_urls={
-        "Bug Report": "https://github.com/acheong08/BingImageCreator/issues/new"
+        "Bug Report": "https://github.com/acheong08/BingImageCreator/issues/new",
     },
     install_requires=[
         "regex",

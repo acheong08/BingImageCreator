@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import contextlib
 import json
@@ -6,10 +7,9 @@ import sys
 import time
 
 import aiohttp
+import pkg_resources
 import regex
 import requests
-import argparse
-import pkg_resources
 
 BING_URL = "https://www.bing.com"
 HEADERS = {
@@ -51,7 +51,7 @@ class ImageGen:
         # check for content waring message
         if "this prompt has been blocked" in response.text.lower():
             raise Exception(
-                "Your prompt has been blocked by Bing. Try to change any bad words and try again."
+                "Your prompt has been blocked by Bing. Try to change any bad words and try again.",
             )
         if (
             "we're working hard to offer image creator in more languages"
@@ -65,7 +65,7 @@ class ImageGen:
             if response3.status_code != 302:
                 print(f"ERROR: {response3.text}")
                 raise Exception(
-                    "Redirect failed, also possible that this prompt isn't allowed"
+                    "Redirect failed, also possible that this prompt isn't allowed",
                 )
             response = response3
         # Get redirect URL
@@ -129,7 +129,7 @@ class ImageGen:
                             output_file.write(chunk)
         except requests.exceptions.MissingSchema as url_exception:
             raise Exception(
-                "Inappropriate contents found in the generated images. Please try again or try another prompt."
+                "Inappropriate contents found in the generated images. Please try again or try another prompt.",
             ) from url_exception
 
 
@@ -168,7 +168,7 @@ class ImageGenAsync:
             content = await response.text()
             if "this prompt has been blocked" in content.lower():
                 raise Exception(
-                    "Your prompt has been blocked by Bing. Try to change any bad words and try again."
+                    "Your prompt has been blocked by Bing. Try to change any bad words and try again.",
                 )
             if response.status != 302:
                 # if rt4 fails, try rt3
@@ -243,7 +243,7 @@ class ImageGenAsync:
                             output_file.write(chunk)
         except aiohttp.client_exceptions.InvalidURL as url_exception:
             raise Exception(
-                "Inappropriate contents found in the generated images. Please try again or try another prompt."
+                "Inappropriate contents found in the generated images. Please try again or try another prompt.",
             ) from url_exception
 
 
