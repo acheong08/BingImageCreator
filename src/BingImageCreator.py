@@ -105,13 +105,13 @@ class ImageGen:
         normal_image_links = list(set(normal_image_links))
 
         # Bad images
-        bad_images = [
-            "https://r.bing.com/rp/in-2zU3AJUdkgFe7ZKv19yPBHVs.png",
-            "https://r.bing.com/rp/TX9QuO3WzcCJz1uaaSwQAz39Kb0.jpg",
-        ]
-        for img in normal_image_links:
-            if img in bad_images:
-                raise Exception("Bad images")
+        # bad_images = [
+        #     "https://r.bing.com/rp/in-2zU3AJUdkgFe7ZKv19yPBHVs.png",
+        #     "https://r.bing.com/rp/TX9QuO3WzcCJz1uaaSwQAz39Kb0.jpg",
+        # ]
+        # for img in normal_image_links:
+        #     if img in bad_images:
+        #         raise Exception("Bad images")
         # No images
         if not normal_image_links:
             raise Exception("No images")
