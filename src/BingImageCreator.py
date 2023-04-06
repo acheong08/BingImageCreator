@@ -30,7 +30,9 @@ HEADERS = {
 # Error messages
 error_timeout = "Your request has timed out."
 error_redirect = "Redirect failed"
-error_blocked_prompt = "Your prompt has been blocked by Bing. Try to change any bad words and try again."
+error_blocked_prompt = (
+    "Your prompt has been blocked by Bing. Try to change any bad words and try again."
+)
 error_noresults = "Could not get results"
 error_unsupported_lang = "\nthis language is currently not supported by bing"
 error_bad_images = "Bad images"
@@ -48,7 +50,9 @@ class ImageGen:
         auth_cookie: str
     """
 
-    def __init__(self, auth_cookie: str, debug, debug_file: bool, quiet: bool = False) -> None:
+    def __init__(
+        self, auth_cookie: str, debug, debug_file: bool, quiet: bool = False
+    ) -> None:
         self.session: requests.Session = requests.Session()
         self.session.headers = HEADERS
         self.session.cookies.set("_U", auth_cookie)
@@ -81,7 +85,6 @@ class ImageGen:
             "we're working hard to offer image creator in more languages"
             in response.text.lower()
         ):
-
             if self.debug_file:
                 self.debug(f"ERROR: {error_unsupported_lang}")
             raise Exception(error_unsupported_lang)
@@ -93,8 +96,7 @@ class ImageGen:
                 if self.debug_file:
                     self.debug(f"ERROR: {error_redirect}")
                 print(f"ERROR: {response3.text}")
-                raise Exception(error_redirect
-                )
+                raise Exception(error_redirect)
             response = response3
         # Get redirect URL
         redirect_url = response.headers["Location"].replace("&nfy=1", "")
