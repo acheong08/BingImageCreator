@@ -280,7 +280,6 @@ class ImageGenAsync:
             for link in links:
                 while os.path.exists(os.path.join(output_dir, f"{jpeg_index}.jpeg")):
                     jpeg_index += 1
-            for link in links:
                 async with self.session.get(link, raise_for_status=True) as response:
                     # save response to file
                     with open(
