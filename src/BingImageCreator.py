@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+from functools import partial
 import contextlib
 import json
 import os
@@ -10,6 +11,7 @@ import aiohttp
 import pkg_resources
 import regex
 import requests
+from typing import Union
 
 BING_URL = "https://www.bing.com"
 # Generate random IP between range 13.104.0.0/14
@@ -43,6 +45,12 @@ wait_message = "Waiting for results..."
 download_message = "\nDownloading images..."
 
 
+def debug(debug_file, text_var):
+    """helper function for debug"""
+    with open(f"{debug_file}", "a") as f:
+        f.write(str(text_var))
+
+
 class ImageGen:
     """
     Image generation by Microsoft Bing
@@ -51,14 +59,15 @@ class ImageGen:
     """
 
     def __init__(
-        self, auth_cookie: str, debug, debug_file: bool, quiet: bool = False
+        self, auth_cookie: str, debug_file: Union[str, None] = None, quiet: bool = False
     ) -> None:
         self.session: requests.Session = requests.Session()
         self.session.headers = HEADERS
         self.session.cookies.set("_U", auth_cookie)
         self.quiet = quiet
         self.debug_file = debug_file
-        self.debug = debug
+        if self.debug_file:
+            self.debug = partial(debug, self.debug_file)
 
     def get_images(self, prompt: str) -> list:
         """
@@ -106,7 +115,7 @@ class ImageGen:
         polling_url = f"{BING_URL}/images/create/async/results/{request_id}?q={url_encoded_prompt}"
         # Poll for results
         if self.debug_file:
-            self.debug()
+            self.debug("Polling and waiting for result")
         if not self.quiet:
             print("Waiting for results...")
         start_wait = time.time()
@@ -343,10 +352,6 @@ def main():
 
     args = parser.parse_args()
 
-    def debugfile(text_var):
-        with open(f"{args.debug_file}", "a") as f:
-            f.write(str(text_var))
-
     if args.version:
         print(pkg_resources.get_distribution("BingImageCreator").version)
         sys.exit()
@@ -363,11 +368,9 @@ def main():
     if args.U is None and args.cookie_file is None:
         raise Exception("Could not find auth cookie")
 
-    debug = debugfile
-
     if not args.asyncio:
         # Create image generator
-        image_generator = ImageGen(args.U, debug, args.debug_file, args.quiet)
+        image_generator = ImageGen(args.U, args.debug_file, args.quiet)
         image_generator.save_images(
             image_generator.get_images(args.prompt),
             output_dir=args.output_dir,
