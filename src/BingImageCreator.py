@@ -315,10 +315,9 @@ def main():
     parser.add_argument("-U", help="Auth cookie from browser", type=str)
     parser.add_argument("--cookie-file", help="File containing auth cookie", type=str)
     parser.add_argument(
-        "--prompt",
+        "prompt",
         help="Prompt to generate images for",
-        type=str,
-        required=True,
+        nargs='+',
     )
 
     parser.add_argument(
@@ -351,7 +350,9 @@ def main():
     )
 
     args = parser.parse_args()
-
+    
+    args.prompt = " ".join(args.prompt)
+    
     if args.version:
         print(pkg_resources.get_distribution("BingImageCreator").version)
         sys.exit()
