@@ -4,16 +4,25 @@ High quality image generation by Microsoft. Reverse engineered API.
 `pip3 install --upgrade BingImageCreator`
 
 ```
- $ python3 -m BingImageCreator -h
-usage: BingImageCreator.py [-h] -U U --prompt PROMPT [--output-dir OUTPUT_DIR]
+usage: BingImageCreator.py [-h] [-U U] [--cookie-file COOKIE_FILE] [--output-dir OUTPUT_DIR]
+                           [--debug-file DEBUG_FILE] [--quiet] [--asyncio] [--version]
+                           prompt [prompt ...]
+
+positional arguments:
+  prompt                Prompt to generate images for
 
 options:
   -h, --help            show this help message and exit
   -U U                  Auth cookie from browser
-  --prompt PROMPT       Prompt to generate images for
-  --asyncio             Use async to sync png
+  --cookie-file COOKIE_FILE
+                        File containing auth cookie
   --output-dir OUTPUT_DIR
                         Output directory
+  --debug-file DEBUG_FILE
+                        Path to the file where debug information will be written.
+  --quiet               Disable pipeline messages
+  --asyncio             Run ImageGen using asyncio
+  --version             Print the version number
 ```
 
 [Developer Documentation](https://github.com/acheong08/BingImageCreator/blob/main/DOCUMENTATION.md)
