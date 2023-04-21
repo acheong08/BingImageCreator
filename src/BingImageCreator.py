@@ -12,8 +12,10 @@ import pkg_resources
 import regex
 import requests
 from typing import Union
-
-BING_URL = "https://www.bing.com"
+if(os.environ.get('BING_URL') == None):
+    BING_URL = "https://www.bing.com"
+else:
+    BING_URL = os.environ.get('BING_URL')
 # Generate random IP between range 13.104.0.0/14
 FORWARDED_IP = (
     f"13.{random.randint(104, 107)}.{random.randint(0, 255)}.{random.randint(0, 255)}"
