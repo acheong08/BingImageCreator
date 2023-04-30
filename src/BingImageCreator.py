@@ -50,7 +50,7 @@ download_message = "\nDownloading images..."
 
 def debug(debug_file, text_var):
     """helper function for debug"""
-    with open(f"{debug_file}", "a") as f:
+    with open(f"{debug_file}", "a", encoding="utf-8") as f:
         f.write(str(text_var))
 
 
