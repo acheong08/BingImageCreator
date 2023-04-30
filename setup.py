@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name="BingImageCreator",
-    version="0.1.1.1",
+    version="0.1.3",
     license="GNU General Public License v2.0",
     author="Antonio Cheong",
     author_email="acheong@student.dalat.org",
@@ -15,6 +15,7 @@ setup(
         "Bug Report": "https://github.com/acheong08/BingImageCreator/issues/new",
     },
     install_requires=[
+        "aiohttp",
         "regex",
         "requests",
     ],
