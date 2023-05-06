@@ -159,7 +159,7 @@ class ImageGen:
             raise Exception(error_no_images)
         return normal_image_links
 
-    def save_images(self, links: list, output_dir: str) -> None:
+    def save_images(self, links: list, output_dir: str,file_name:str=None) -> None:
         """
         Saves images to output directory
         """
@@ -170,15 +170,16 @@ class ImageGen:
         with contextlib.suppress(FileExistsError):
             os.mkdir(output_dir)
         try:
+            fn=f'{file_name}_' if file_name else ''
             jpeg_index = 0
             for link in links:
-                while os.path.exists(os.path.join(output_dir, f"{jpeg_index}.jpeg")):
+                while os.path.exists(os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg")):
                     jpeg_index += 1
                 with self.session.get(link, stream=True) as response:
                     # save response to file
                     response.raise_for_status()
                     with open(
-                        os.path.join(output_dir, f"{jpeg_index}.jpeg"), "wb"
+                        os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"), "wb"
                     ) as output_file:
                         for chunk in response.iter_content(chunk_size=8192):
                             output_file.write(chunk)
