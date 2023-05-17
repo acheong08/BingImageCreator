@@ -83,9 +83,12 @@ class ImageGen:
         if self.debug_file:
             self.debug(sending_message)
         url_encoded_prompt = requests.utils.quote(prompt)
+        payload = f"q={url_encoded_prompt}&qs=ds"
         # https://www.bing.com/images/create?q=<PROMPT>&rt=3&FORM=GENCRE
         url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=4&FORM=GENCRE"
-        response = self.session.post(url, allow_redirects=False)
+        response = self.session.post(
+            url, allow_redirects=False, data=payload, timeout=200
+        )
         # check for content waring message
         if "this prompt has been blocked" in response.text.lower():
             if self.debug_file:
@@ -159,7 +162,7 @@ class ImageGen:
             raise Exception(error_no_images)
         return normal_image_links
 
-    def save_images(self, links: list, output_dir: str,file_name:str=None) -> None:
+    def save_images(self, links: list, output_dir: str, file_name: str = None) -> None:
         """
         Saves images to output directory
         """
@@ -170,10 +173,12 @@ class ImageGen:
         with contextlib.suppress(FileExistsError):
             os.mkdir(output_dir)
         try:
-            fn=f'{file_name}_' if file_name else ''
+            fn = f"{file_name}_" if file_name else ""
             jpeg_index = 0
             for link in links:
-                while os.path.exists(os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg")):
+                while os.path.exists(
+                    os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg")
+                ):
                     jpeg_index += 1
                 with self.session.get(link, stream=True) as response:
                     # save response to file
@@ -221,7 +226,10 @@ class ImageGenAsync:
         url_encoded_prompt = requests.utils.quote(prompt)
         # https://www.bing.com/images/create?q=<PROMPT>&rt=3&FORM=GENCRE
         url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=4&FORM=GENCRE"
-        async with self.session.post(url, allow_redirects=False) as response:
+        payload = f"q={url_encoded_prompt}&qs=ds"
+        async with self.session.post(
+            url, allow_redirects=False, data=payload
+        ) as response:
             content = await response.text()
             if "this prompt has been blocked" in content.lower():
                 raise Exception(
