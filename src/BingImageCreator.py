@@ -62,11 +62,18 @@ class ImageGen:
     """
 
     def __init__(
-        self, auth_cookie: str, debug_file: Union[str, None] = None, quiet: bool = False
+        self,
+        auth_cookie: str,
+        debug_file: Union[str, None] = None,
+        quiet: bool = False,
+        all_cookies: list[dict] = None,
     ) -> None:
         self.session: requests.Session = requests.Session()
         self.session.headers = HEADERS
         self.session.cookies.set("_U", auth_cookie)
+        if all_cookies:
+            for cookie in all_cookies:
+                self.session.cookies.set(cookie["name"], cookie["value"])
         self.quiet = quiet
         self.debug_file = debug_file
         if self.debug_file:
@@ -370,20 +377,20 @@ def main():
         sys.exit()
 
     # Load auth cookie
-    with contextlib.suppress(Exception):
-        with open(args.cookie_file, encoding="utf-8") as file:
-            cookie_json = json.load(file)
-            for cookie in cookie_json:
-                if cookie.get("name") == "_U":
-                    args.U = cookie.get("value")
-                    break
+    cookie_json = None
+    if args.cookie_file is not None:
+        with contextlib.suppress(Exception):
+            with open(args.cookie_file, encoding="utf-8") as file:
+                cookie_json = json.load(file)
 
     if args.U is None and args.cookie_file is None:
         raise Exception("Could not find auth cookie")
 
     if not args.asyncio:
         # Create image generator
-        image_generator = ImageGen(args.U, args.debug_file, args.quiet)
+        image_generator = ImageGen(
+            args.U, args.debug_file, args.quiet, all_cookies=cookie_json
+        )
         image_generator.save_images(
             image_generator.get_images(args.prompt),
             output_dir=args.output_dir,
