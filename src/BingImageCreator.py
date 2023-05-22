@@ -11,7 +11,7 @@ import aiohttp
 import pkg_resources
 import regex
 import requests
-from typing import Union
+from typing import Union, List, Dict
 
 if os.environ.get("BING_URL") == None:
     BING_URL = "https://www.bing.com"
@@ -66,7 +66,7 @@ class ImageGen:
         auth_cookie: str,
         debug_file: Union[str, None] = None,
         quiet: bool = False,
-        all_cookies: list[dict] = None,
+        all_cookies: List[Dict] = None,
     ) -> None:
         self.session: requests.Session = requests.Session()
         self.session.headers = HEADERS
