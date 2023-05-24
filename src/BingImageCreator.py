@@ -1,17 +1,20 @@
 import argparse
 import asyncio
-from functools import partial
 import contextlib
 import json
 import os
 import random
 import sys
 import time
+from functools import partial
+from typing import Dict
+from typing import List
+from typing import Union
+
 import aiohttp
 import pkg_resources
 import regex
 import requests
-from typing import Union, List, Dict
 
 if os.environ.get("BING_URL") == None:
     BING_URL = "https://www.bing.com"
@@ -94,7 +97,10 @@ class ImageGen:
         # https://www.bing.com/images/create?q=<PROMPT>&rt=3&FORM=GENCRE
         url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=4&FORM=GENCRE"
         response = self.session.post(
-            url, allow_redirects=False, data=payload, timeout=200
+            url,
+            allow_redirects=False,
+            data=payload,
+            timeout=200,
         )
         # check for content waring message
         if "this prompt has been blocked" in response.text.lower():
@@ -184,14 +190,15 @@ class ImageGen:
             jpeg_index = 0
             for link in links:
                 while os.path.exists(
-                    os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg")
+                    os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"),
                 ):
                     jpeg_index += 1
                 with self.session.get(link, stream=True) as response:
                     # save response to file
                     response.raise_for_status()
                     with open(
-                        os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"), "wb"
+                        os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"),
+                        "wb",
                     ) as output_file:
                         for chunk in response.iter_content(chunk_size=8192):
                             output_file.write(chunk)
@@ -225,7 +232,7 @@ class ImageGenAsync:
         if all_cookies:
             for cookie in all_cookies:
                 self.session.cookie_jar.update_cookies(
-                    {cookie["name"]: cookie["value"]}
+                    {cookie["name"]: cookie["value"]},
                 )
         if auth_cookie:
             self.session.cookie_jar.update_cookies({"_U": auth_cookie})
@@ -253,7 +260,9 @@ class ImageGenAsync:
         url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=4&FORM=GENCRE"
         payload = f"q={url_encoded_prompt}&qs=ds"
         async with self.session.post(
-            url, allow_redirects=False, data=payload
+            url,
+            allow_redirects=False,
+            data=payload,
         ) as response:
             content = await response.text()
             if "this prompt has been blocked" in content.lower():
@@ -317,7 +326,10 @@ class ImageGenAsync:
         return normal_image_links
 
     async def save_images(
-        self, links: list, output_dir: str, file_name: str = None
+        self,
+        links: list,
+        output_dir: str,
+        file_name: str = None,
     ) -> None:
         """
         Saves images to output directory
@@ -333,13 +345,14 @@ class ImageGenAsync:
             jpeg_index = 0
             for link in links:
                 while os.path.exists(
-                    os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg")
+                    os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"),
                 ):
                     jpeg_index += 1
                 async with self.session.get(link, raise_for_status=True) as response:
                     # save response to file
                     with open(
-                        os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"), "wb"
+                        os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"),
+                        "wb",
                     ) as output_file:
                         async for chunk in response.content.iter_chunked(8192):
                             output_file.write(chunk)
@@ -358,7 +371,10 @@ async def async_image_gen(
     all_cookies=None,
 ):
     async with ImageGenAsync(
-        u_cookie, debug_file=debug_file, quiet=quiet, all_cookies=all_cookies
+        u_cookie,
+        debug_file=debug_file,
+        quiet=quiet,
+        all_cookies=all_cookies,
     ) as image_generator:
         images = await image_generator.get_images(prompt)
         await image_generator.save_images(images, output_dir=output_dir)
@@ -423,7 +439,10 @@ def main():
     if not args.asyncio:
         # Create image generator
         image_generator = ImageGen(
-            args.U, args.debug_file, args.quiet, all_cookies=cookie_json
+            args.U,
+            args.debug_file,
+            args.quiet,
+            all_cookies=cookie_json,
         )
         image_generator.save_images(
             image_generator.get_images(args.prompt),
@@ -438,7 +457,7 @@ def main():
                 args.debug_file,
                 args.quiet,
                 all_cookies=cookie_json,
-            )
+            ),
         )
 
 
