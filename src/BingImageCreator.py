@@ -41,6 +41,9 @@ error_redirect = "Redirect failed"
 error_blocked_prompt = (
     "Your prompt has been blocked by Bing. Try to change any bad words and try again."
 )
+error_being_reviewed_prompt = (
+    "Your prompt is being reviewed by Bing. Try to change any sensitive words and try again."
+)
 error_noresults = "Could not get results"
 error_unsupported_lang = "\nthis language is currently not supported by bing"
 error_bad_images = "Bad images"
@@ -103,6 +106,12 @@ class ImageGen:
             timeout=200,
         )
         # check for content waring message
+        if "this prompt is being reviewed" in response.text.lower():
+            if self.debug_file:
+                self.debug(f"ERROR: {error_being_reviewed_prompt}")
+            raise Exception(
+                error_being_reviewed_prompt,
+            )
         if "this prompt has been blocked" in response.text.lower():
             if self.debug_file:
                 self.debug(f"ERROR: {error_blocked_prompt}")
