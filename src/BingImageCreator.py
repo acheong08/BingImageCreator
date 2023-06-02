@@ -11,7 +11,7 @@ from typing import Dict
 from typing import List
 from typing import Union
 
-import aiohttp
+import httpx
 import pkg_resources
 import regex
 import requests
@@ -41,9 +41,7 @@ error_redirect = "Redirect failed"
 error_blocked_prompt = (
     "Your prompt has been blocked by Bing. Try to change any bad words and try again."
 )
-error_being_reviewed_prompt = (
-    "Your prompt is being reviewed by Bing. Try to change any sensitive words and try again."
-)
+error_being_reviewed_prompt = "Your prompt is being reviewed by Bing. Try to change any sensitive words and try again."
 error_noresults = "Could not get results"
 error_unsupported_lang = "\nthis language is currently not supported by bing"
 error_bad_images = "Bad images"
@@ -101,7 +99,7 @@ class ImageGen:
         url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=4&FORM=GENCRE"
         response = self.session.post(
             url,
-            allow_redirects=False,
+            follow_redirects=False,
             data=payload,
             timeout=200,
         )
@@ -128,7 +126,7 @@ class ImageGen:
         if response.status_code != 302:
             # if rt4 fails, try rt3
             url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=3&FORM=GENCRE"
-            response3 = self.session.post(url, allow_redirects=False, timeout=200)
+            response3 = self.session.post(url, follow_redirects=False, timeout=200)
             if response3.status_code != 302:
                 if self.debug_file:
                     self.debug(f"ERROR: {error_redirect}")
@@ -221,7 +219,6 @@ class ImageGenAsync:
     """
     Image generation by Microsoft Bing
     Parameters:
-        auth_cookie: str
     """
 
     def __init__(
@@ -233,18 +230,17 @@ class ImageGenAsync:
     ) -> None:
         if auth_cookie is None and not all_cookies:
             raise Exception("No auth cookie provided")
-        self.session = aiohttp.ClientSession(
+        self.session = httpx.AsyncClient(
             headers=HEADERS,
-            cookies={"_U": auth_cookie},
             trust_env=True,
         )
+        if auth_cookie:
+            self.session.cookies.update({"_U": auth_cookie})
         if all_cookies:
             for cookie in all_cookies:
-                self.session.cookie_jar.update_cookies(
+                self.session.cookies.update(
                     {cookie["name"]: cookie["value"]},
                 )
-        if auth_cookie:
-            self.session.cookie_jar.update_cookies({"_U": auth_cookie})
         self.quiet = quiet
         self.debug_file = debug_file
         if self.debug_file:
@@ -254,7 +250,7 @@ class ImageGenAsync:
         return self
 
     async def __aexit__(self, *excinfo) -> None:
-        await self.session.close()
+        await self.session.aclose()
 
     async def get_images(self, prompt: str) -> list:
         """
@@ -266,32 +262,29 @@ class ImageGenAsync:
             print("Sending request...")
         url_encoded_prompt = requests.utils.quote(prompt)
         # https://www.bing.com/images/create?q=<PROMPT>&rt=3&FORM=GENCRE
-        url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=4&FORM=GENCRE"
+        url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=3&FORM=GENCRE"
         payload = f"q={url_encoded_prompt}&qs=ds"
-        async with self.session.post(
+        response = await self.session.post(
             url,
-            allow_redirects=False,
+            follow_redirects=False,
             data=payload,
-        ) as response:
-            content = await response.text()
-            if "this prompt has been blocked" in content.lower():
-                raise Exception(
-                    "Your prompt has been blocked by Bing. Try to change any bad words and try again.",
-                )
-            if response.status != 302:
-                # if rt4 fails, try rt3
-                url = (
-                    f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=3&FORM=GENCRE"
-                )
-                async with self.session.post(
-                    url,
-                    allow_redirects=False,
-                    timeout=200,
-                ) as response3:
-                    if response3.status != 302:
-                        print(f"ERROR: {await response3.text()}")
-                        raise Exception("Redirect failed")
-                    response = response3
+        )
+        content = response.text
+        if "this prompt has been blocked" in content.lower():
+            raise Exception(
+                "Your prompt has been blocked by Bing. Try to change any bad words and try again.",
+            )
+        if response.status_code != 302:
+            # if rt4 fails, try rt3
+            url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=4&FORM=GENCRE"
+            response = await self.session.post(
+                url,
+                follow_redirects=False,
+                timeout=200,
+            )
+            if response.status_code != 302:
+                print(f"ERROR: {response.text}")
+                raise Exception("Redirect failed")
         # Get redirect URL
         redirect_url = response.headers["Location"].replace("&nfy=1", "")
         request_id = redirect_url.split("id=")[-1]
@@ -306,9 +299,9 @@ class ImageGenAsync:
                 print(".", end="", flush=True)
             # By default, timeout is 300s, change as needed
             response = await self.session.get(polling_url)
-            if response.status != 200:
+            if response.status_code != 200:
                 raise Exception("Could not get results")
-            content = await response.text()
+            content = response.text
             if content and content.find("errorMessage") == -1:
                 break
 
@@ -357,15 +350,16 @@ class ImageGenAsync:
                     os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"),
                 ):
                     jpeg_index += 1
-                async with self.session.get(link, raise_for_status=True) as response:
-                    # save response to file
-                    with open(
-                        os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"),
-                        "wb",
-                    ) as output_file:
-                        async for chunk in response.content.iter_chunked(8192):
-                            output_file.write(chunk)
-        except aiohttp.client_exceptions.InvalidURL as url_exception:
+                response = await self.session.get(link)
+                if response.status_code != 200:
+                    raise Exception("Could not download image")
+                # save response to file
+                with open(
+                    os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"),
+                    "wb",
+                ) as output_file:
+                    output_file.write(response.content)
+        except httpx.InvalidURL as url_exception:
             raise Exception(
                 "Inappropriate contents found in the generated images. Please try again or try another prompt.",
             ) from url_exception
