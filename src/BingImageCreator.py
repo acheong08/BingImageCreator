@@ -99,7 +99,7 @@ class ImageGen:
         url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=4&FORM=GENCRE"
         response = self.session.post(
             url,
-            follow_redirects=False,
+            allow_redirects=False,
             data=payload,
             timeout=200,
         )
@@ -126,13 +126,12 @@ class ImageGen:
         if response.status_code != 302:
             # if rt4 fails, try rt3
             url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=3&FORM=GENCRE"
-            response3 = self.session.post(url, follow_redirects=False, timeout=200)
-            if response3.status_code != 302:
+            response = self.session.post(url, allow_redirects=False, timeout=200)
+            if response.status_code != 302:
                 if self.debug_file:
                     self.debug(f"ERROR: {error_redirect}")
-                print(f"ERROR: {response3.text}")
+                print(f"ERROR: {response.text}")
                 raise Exception(error_redirect)
-            response = response3
         # Get redirect URL
         redirect_url = response.headers["Location"].replace("&nfy=1", "")
         request_id = redirect_url.split("id=")[-1]
