@@ -61,8 +61,12 @@ def debug(debug_file, text_var):
 class ImageGen:
     """
     Image generation by Microsoft Bing
-    Parameters:3
+    Parameters:
         auth_cookie: str
+    Optional Parameters:
+        debug_file: str
+        quiet: bool
+        all_cookies: List[Dict]
     """
 
     def __init__(
@@ -184,6 +188,10 @@ class ImageGen:
     def save_images(self, links: list, output_dir: str, file_name: str = None) -> None:
         """
         Saves images to output directory
+        Parameters:
+            links: list[str]
+            output_dir: str
+            file_name: str
         """
         if self.debug_file:
             self.debug(download_message)
@@ -218,6 +226,11 @@ class ImageGenAsync:
     """
     Image generation by Microsoft Bing
     Parameters:
+        auth_cookie: str
+    Optional Parameters:
+        debug_file: str
+        quiet: bool
+        all_cookies: list[dict]
     """
 
     def __init__(
