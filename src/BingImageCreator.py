@@ -258,6 +258,9 @@ class ImageGenAsync:
         if self.debug_file:
             self.debug = partial(debug, self.debug_file)
 
+    async def __aenter__(self):
+        return self
+
     async def __aexit__(self, *excinfo) -> None:
         await self.session.aclose()
 
