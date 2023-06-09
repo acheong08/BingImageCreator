@@ -139,7 +139,7 @@ class ImageGen:
         # Get redirect URL
         redirect_url = response.headers["Location"].replace("&nfy=1", "")
         request_id = redirect_url.split("id=")[-1]
-        self.session.get(f"{BING_URL}{redirect_url}")
+        self.session.get(f"{BING_URL}{redirect_url}", timeout=None)
         # https://www.bing.com/images/create/async/results/{ID}?q={PROMPT}
         polling_url = f"{BING_URL}/images/create/async/results/{request_id}?q={url_encoded_prompt}"
         # Poll for results
@@ -155,7 +155,7 @@ class ImageGen:
                 raise Exception(error_timeout)
             if not self.quiet:
                 print(".", end="", flush=True)
-            response = self.session.get(polling_url)
+            response = self.session.get(polling_url, timeout=None)
             if response.status_code != 200:
                 if self.debug_file:
                     self.debug(f"ERROR: {error_noresults}")
@@ -207,7 +207,7 @@ class ImageGen:
                     os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"),
                 ):
                     jpeg_index += 1
-                with self.session.get(link, stream=True) as response:
+                with self.session.get(link, stream=True, timeout=None) as response:
                     # save response to file
                     response.raise_for_status()
                     with open(
@@ -300,7 +300,7 @@ class ImageGenAsync:
         # Get redirect URL
         redirect_url = response.headers["Location"].replace("&nfy=1", "")
         request_id = redirect_url.split("id=")[-1]
-        await self.session.get(f"{BING_URL}{redirect_url}")
+        await self.session.get(f"{BING_URL}{redirect_url}", timeout=None)
         # https://www.bing.com/images/create/async/results/{ID}?q={PROMPT}
         polling_url = f"{BING_URL}/images/create/async/results/{request_id}?q={url_encoded_prompt}"
         # Poll for results
@@ -310,7 +310,7 @@ class ImageGenAsync:
             if not self.quiet:
                 print(".", end="", flush=True)
             # By default, timeout is 300s, change as needed
-            response = await self.session.get(polling_url)
+            response = await self.session.get(polling_url, timeout=None)
             if response.status_code != 200:
                 raise Exception("Could not get results")
             content = response.text
@@ -362,7 +362,7 @@ class ImageGenAsync:
                     os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"),
                 ):
                     jpeg_index += 1
-                response = await self.session.get(link)
+                response = await self.session.get(link, timeout=None)
                 if response.status_code != 200:
                     raise Exception("Could not download image")
                 # save response to file
