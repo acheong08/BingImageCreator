@@ -16,10 +16,7 @@ import pkg_resources
 import regex
 import requests
 
-if os.environ.get("BING_URL") == None:
-    BING_URL = "https://www.bing.com"
-else:
-    BING_URL = os.environ.get("BING_URL")
+BING_URL = os.getenv("BING_URL", "https://www.bing.com")
 # Generate random IP between range 13.104.0.0/14
 FORWARDED_IP = (
     f"13.{random.randint(104, 107)}.{random.randint(0, 255)}.{random.randint(0, 255)}"
@@ -46,7 +43,7 @@ error_noresults = "Could not get results"
 error_unsupported_lang = "\nthis language is currently not supported by bing"
 error_bad_images = "Bad images"
 error_no_images = "No images"
-#
+# Action messages
 sending_message = "Sending request..."
 wait_message = "Waiting for results..."
 download_message = "\nDownloading images..."
@@ -186,13 +183,14 @@ class ImageGen:
             raise Exception(error_no_images)
         return normal_image_links
 
-    def save_images(self, links: list, output_dir: str, file_name: str = None) -> None:
+    def save_images(self, links: list, download_count: int, output_dir: str, file_name: str = None) -> None:
         """
         Saves images to output directory
         Parameters:
             links: list[str]
             output_dir: str
             file_name: str
+            download_count: int
         """
         if self.debug_file:
             self.debug(download_message)
@@ -203,20 +201,18 @@ class ImageGen:
         try:
             fn = f"{file_name}_" if file_name else ""
             jpeg_index = 0
-            for link in links:
-                while os.path.exists(
-                    os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"),
-                ):
+
+            for link in links[:download_count]:
+                while os.path.exists(os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg")):
                     jpeg_index += 1
-                with self.session.get(link, stream=True) as response:
-                    # save response to file
-                    response.raise_for_status()
-                    with open(
-                        os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"),
-                        "wb",
-                    ) as output_file:
-                        for chunk in response.iter_content(chunk_size=8192):
-                            output_file.write(chunk)
+                response = self.session.get(link)
+                if response.status_code != 200:
+                    raise Exception("Could not download image")
+                # save response to file
+                with open(os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"), "wb") as output_file:
+                    output_file.write(response.content)
+                jpeg_index += 1
+
         except requests.exceptions.MissingSchema as url_exception:
             raise Exception(
                 "Inappropriate contents found in the generated images. Please try again or try another prompt.",
@@ -344,11 +340,13 @@ class ImageGenAsync:
         self,
         links: list,
         output_dir: str,
+        download_count: int,
         file_name: str = None,
     ) -> None:
         """
         Saves images to output directory
         """
+
         if self.debug_file:
             self.debug(download_message)
         if not self.quiet:
@@ -358,20 +356,17 @@ class ImageGenAsync:
         try:
             fn = f"{file_name}_" if file_name else ""
             jpeg_index = 0
-            for link in links:
-                while os.path.exists(
-                    os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"),
-                ):
+
+            for link in links[:download_count]:
+                while os.path.exists(os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg")):
                     jpeg_index += 1
                 response = await self.session.get(link)
                 if response.status_code != 200:
                     raise Exception("Could not download image")
                 # save response to file
-                with open(
-                    os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"),
-                    "wb",
-                ) as output_file:
+                with open(os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"), "wb") as output_file:
                     output_file.write(response.content)
+                jpeg_index += 1
         except httpx.InvalidURL as url_exception:
             raise Exception(
                 "Inappropriate contents found in the generated images. Please try again or try another prompt.",
@@ -380,6 +375,7 @@ class ImageGenAsync:
 
 async def async_image_gen(
     prompt: str,
+    download_count: int,
     output_dir: str,
     u_cookie=None,
     debug_file=None,
@@ -393,7 +389,7 @@ async def async_image_gen(
         all_cookies=all_cookies,
     ) as image_generator:
         images = await image_generator.get_images(prompt)
-        await image_generator.save_images(images, output_dir=output_dir)
+        await image_generator.save_images(images, output_dir=output_dir, download_count=download_count)
 
 
 def main():
@@ -412,6 +408,13 @@ def main():
         help="Output directory",
         type=str,
         default="./output",
+    )
+
+    parser.add_argument(
+        "--download-count",
+        help="Number of images to download, value must be less than five",
+        type=int,
+        default=4
     )
 
     parser.add_argument(
@@ -452,6 +455,9 @@ def main():
     if args.U is None and args.cookie_file is None:
         raise Exception("Could not find auth cookie")
 
+    if args.download_count > 4:
+        raise Exception("The number of downloads must be less than five")
+
     if not args.asyncio:
         # Create image generator
         image_generator = ImageGen(
@@ -463,11 +469,13 @@ def main():
         image_generator.save_images(
             image_generator.get_images(args.prompt),
             output_dir=args.output_dir,
+            download_count=args.download_count,
         )
     else:
         asyncio.run(
             async_image_gen(
                 args.prompt,
+                args.download_count,
                 args.output_dir,
                 args.U,
                 args.debug_file,
