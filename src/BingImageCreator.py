@@ -183,7 +183,13 @@ class ImageGen:
             raise Exception(error_no_images)
         return normal_image_links
 
-    def save_images(self, links: list, download_count: int, output_dir: str, file_name: str = None) -> None:
+    def save_images(
+        self,
+        links: list,
+        output_dir: str,
+        file_name: str = None,
+        download_count: int = None,
+    ) -> None:
         """
         Saves images to output directory
         Parameters:
@@ -202,14 +208,21 @@ class ImageGen:
             fn = f"{file_name}_" if file_name else ""
             jpeg_index = 0
 
-            for link in links[:download_count]:
-                while os.path.exists(os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg")):
+            if download_count:
+                links = links[:download_count]
+
+            for link in links:
+                while os.path.exists(
+                    os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg")
+                ):
                     jpeg_index += 1
                 response = self.session.get(link)
                 if response.status_code != 200:
                     raise Exception("Could not download image")
                 # save response to file
-                with open(os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"), "wb") as output_file:
+                with open(
+                    os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"), "wb"
+                ) as output_file:
                     output_file.write(response.content)
                 jpeg_index += 1
 
@@ -358,13 +371,17 @@ class ImageGenAsync:
             jpeg_index = 0
 
             for link in links[:download_count]:
-                while os.path.exists(os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg")):
+                while os.path.exists(
+                    os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg")
+                ):
                     jpeg_index += 1
                 response = await self.session.get(link)
                 if response.status_code != 200:
                     raise Exception("Could not download image")
                 # save response to file
-                with open(os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"), "wb") as output_file:
+                with open(
+                    os.path.join(output_dir, f"{fn}{jpeg_index}.jpeg"), "wb"
+                ) as output_file:
                     output_file.write(response.content)
                 jpeg_index += 1
         except httpx.InvalidURL as url_exception:
@@ -389,7 +406,9 @@ async def async_image_gen(
         all_cookies=all_cookies,
     ) as image_generator:
         images = await image_generator.get_images(prompt)
-        await image_generator.save_images(images, output_dir=output_dir, download_count=download_count)
+        await image_generator.save_images(
+            images, output_dir=output_dir, download_count=download_count
+        )
 
 
 def main():
@@ -414,7 +433,7 @@ def main():
         "--download-count",
         help="Number of images to download, value must be less than five",
         type=int,
-        default=4
+        default=4,
     )
 
     parser.add_argument(
