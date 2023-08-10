@@ -61,6 +61,7 @@ class ImageGen:
     Image generation by Microsoft Bing
     Parameters:
         auth_cookie: str
+        auth_cookie_SRCHHPGUSR: str
     Optional Parameters:
         debug_file: str
         quiet: bool
@@ -70,6 +71,7 @@ class ImageGen:
     def __init__(
         self,
         auth_cookie: str,
+        auth_cookie_SRCHHPGUSR: str,
         debug_file: Union[str, None] = None,
         quiet: bool = False,
         all_cookies: List[Dict] = None,
@@ -77,6 +79,7 @@ class ImageGen:
         self.session: requests.Session = requests.Session()
         self.session.headers = HEADERS
         self.session.cookies.set("_U", auth_cookie)
+        self.session.cookies.set("SRCHHPGUSR", auth_cookie_SRCHHPGUSR)
         if all_cookies:
             for cookie in all_cookies:
                 self.session.cookies.set(cookie["name"], cookie["value"])
